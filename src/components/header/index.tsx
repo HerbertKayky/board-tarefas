@@ -13,12 +13,14 @@ export function Header() {
               Tarefas <span className="text-orange-600">+</span>
             </h1>
           </Link>
-          <Link
-            className="py-1 px-2 ml-3 rounded bg-slate-100"
-            href="/dashboard"
-          >
-            Meu painel
-          </Link>
+          {session?.user && (
+            <Link
+              className="py-1 px-2 ml-3 rounded bg-slate-100"
+              href="/dashboard"
+            >
+              Meu painel
+            </Link>
+          )}
         </nav>
         {status === "loading" ? (
           <></>
