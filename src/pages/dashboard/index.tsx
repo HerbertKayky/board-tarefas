@@ -1,4 +1,6 @@
 import Textarea from "@/components/textarea";
+import { db } from "@/services/firebaseConnection";
+import { addDoc, collection } from "firebase/firestore";
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import Head from "next/head";
@@ -6,7 +8,13 @@ import { ChangeEvent, FormEvent, useState } from "react";
 import { FaTrash } from "react-icons/fa";
 import { FiShare2 } from "react-icons/fi";
 
-export default function Dashboard() {
+interface DashboardProps {
+  user: {
+    email: string;
+  };
+}
+
+export default function Dashboard({ user }: DashboardProps) {
   const [input, setInput] = useState("");
   const [publicTask, setPublicTask] = useState(false);
 
@@ -14,9 +22,22 @@ export default function Dashboard() {
     setPublicTask(e.target.checked);
   }
 
-  function handleRegisterTask(e: FormEvent) {
+  async function handleRegisterTask(e: FormEvent) {
     e.preventDefault();
     if (input === "") return;
+
+    try {
+      await addDoc(collection(db, "tarefas"), {
+        tarefa: input,
+        created: new Date(),
+        user: user?.email,
+        public: publicTask,
+      });
+      setInput("");
+      setPublicTask(false);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   return (
@@ -100,6 +121,10 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   }
 
   return {
-    props: {},
+    props: {
+      user: {
+        email: session?.user?.email,
+      },
+    },
   };
 };
