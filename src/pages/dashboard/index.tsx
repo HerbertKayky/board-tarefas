@@ -3,6 +3,8 @@ import { db } from "@/services/firebaseConnection";
 import {
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   onSnapshot,
   orderBy,
   query,
@@ -11,6 +13,7 @@ import {
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import Head from "next/head";
+import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { FaTrash } from "react-icons/fa";
 import { FiShare2 } from "react-icons/fi";
@@ -81,6 +84,17 @@ export default function Dashboard({ user }: DashboardProps) {
     }
   }
 
+  async function handleShare(id: string) {
+    await navigator.clipboard.writeText(
+      `${process.env.NEXT_PUBLIC_URL}/task/${id}`
+    );
+  }
+
+  async function handleDeleteTask(id: string) {
+    const docRef = doc(db, "tarefas", id);
+    await deleteDoc(docRef);
+  }
+
   return (
     <div>
       <Head>
@@ -136,15 +150,24 @@ export default function Dashboard({ user }: DashboardProps) {
                   <label className="bg-blue-600 px-1 mr-1 rounded text-white">
                     Público
                   </label>
-                  <button>
+                  <button onClick={() => handleShare(item.id)}>
                     <FiShare2 size={22} color="#3183ff" />
                   </button>
                 </div>
               )}
 
               <div className="flex justify-between text-center w-full">
-                <p className="whitespace-pre-wrap">{item.tarefa}</p>
-                <button className="mr-3">
+                {item.public ? (
+                  <Link href={`/task/${item.id}`}>
+                    <p className="whitespace-pre-wrap">{item.tarefa}</p>
+                  </Link>
+                ) : (
+                  <p className="whitespace-pre-wrap">{item.tarefa}</p>
+                )}
+                <button
+                  onClick={() => handleDeleteTask(item.id)}
+                  className="mr-3"
+                >
                   <FaTrash size={24} color="#ea3140" />
                 </button>
               </div>
