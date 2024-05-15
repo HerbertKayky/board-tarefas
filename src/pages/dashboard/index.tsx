@@ -1,10 +1,17 @@
 import Textarea from "@/components/textarea";
 import { db } from "@/services/firebaseConnection";
-import { addDoc, collection } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import Head from "next/head";
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { FaTrash } from "react-icons/fa";
 import { FiShare2 } from "react-icons/fi";
 
@@ -14,9 +21,43 @@ interface DashboardProps {
   };
 }
 
+interface TaskProps {
+  id: string;
+  created: Date;
+  public: boolean;
+  tarefa: string;
+  user: string;
+}
+
 export default function Dashboard({ user }: DashboardProps) {
   const [input, setInput] = useState("");
   const [publicTask, setPublicTask] = useState(false);
+  const [tasks, setTasks] = useState<TaskProps[]>([]);
+
+  useEffect(() => {
+    async function loadTasks() {
+      const tasksRef = collection(db, "tarefas");
+      const q = query(
+        tasksRef,
+        orderBy("created", "desc"),
+        where("user", "==", user?.email)
+      );
+      onSnapshot(q, (snapshot) => {
+        let lista = [] as TaskProps[];
+        snapshot.forEach((doc) => {
+          lista.push({
+            id: doc.id,
+            tarefa: doc.data().tarefa,
+            created: doc.data().created,
+            user: doc.data().user,
+            public: doc.data().public,
+          });
+        });
+        setTasks(lista);
+      });
+    }
+    loadTasks();
+  }, [user?.email]);
 
   function handleChangePublic(e: ChangeEvent<HTMLInputElement>) {
     setPublicTask(e.target.checked);
@@ -84,23 +125,31 @@ export default function Dashboard({ user }: DashboardProps) {
           <h1 className="flex justify-center font-bold text-3xl mb-5">
             Minhas tarefas
           </h1>
-          <article className="mb-5 leading-7 flex flex-col text-start border rounded border-slate-300 p-3">
-            <div className="flex items-center mb-2">
-              <label className="bg-blue-600 px-1 mr-1 rounded text-white">
-                Público
-              </label>
-              <button>
-                <FiShare2 size={22} color="#3183ff" />
-              </button>
-            </div>
 
-            <div className="flex justify-between text-center w-full">
-              <p className="whitespace-pre-wrap">Minha primeira tarefa!</p>
-              <button className="mr-3">
-                <FaTrash size={24} color="#ea3140" />
-              </button>
-            </div>
-          </article>
+          {tasks.map((item) => (
+            <article
+              key={item.id}
+              className="mb-5 leading-7 flex flex-col text-start border rounded border-slate-300 p-3"
+            >
+              {item.public && (
+                <div className="flex items-center mb-2">
+                  <label className="bg-blue-600 px-1 mr-1 rounded text-white">
+                    Público
+                  </label>
+                  <button>
+                    <FiShare2 size={22} color="#3183ff" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex justify-between text-center w-full">
+                <p className="whitespace-pre-wrap">{item.tarefa}</p>
+                <button className="mr-3">
+                  <FaTrash size={24} color="#ea3140" />
+                </button>
+              </div>
+            </article>
+          ))}
         </section>
       </main>
     </div>
