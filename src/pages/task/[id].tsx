@@ -3,6 +3,7 @@ import { db } from "@/services/firebaseConnection";
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -60,9 +61,21 @@ export default function Task({ item, allComments }: TaskProps) {
         name: session?.user?.name,
         taskId: item?.taskId,
       };
-      setComments((oldItems) => [...oldItems, data ]);
+      setComments((oldItems) => [...oldItems, data]);
 
       setInput("");
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async function handleDeleteComment(id: string) {
+    try {
+      const docRef = doc(db, "comments", id);
+      await deleteDoc(docRef);
+
+      const deleteComment = comments.filter((item) => item.id !== id);
+      setComments(deleteComment);
     } catch (err) {
       console.log(err);
     }
@@ -118,7 +131,10 @@ export default function Task({ item, allComments }: TaskProps) {
                 {item.name}
               </label>
               {item.user === session?.user?.email && (
-                <button className="pr-5 mx-2">
+                <button
+                  onClick={() => handleDeleteComment(item.id)}
+                  className="pr-5 mx-2"
+                >
                   <FaTrash size={18} color="#ea3140" />
                 </button>
               )}
