@@ -1,6 +1,14 @@
 import Textarea from "@/components/textarea";
 import { db } from "@/services/firebaseConnection";
-import { addDoc, collection, doc, getDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { GetServerSideProps } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
@@ -14,11 +22,21 @@ interface TaskProps {
     user: string;
     taskId: string;
   };
+  allComments: CommentProps[];
 }
 
-export default function Task({ item }: TaskProps) {
+interface CommentProps {
+  id: string;
+  comment: string;
+  name: string;
+  user: string;
+  taskId: string;
+}
+
+export default function Task({ item, allComments }: TaskProps) {
   const { data: session } = useSession();
   const [input, setInput] = useState("");
+  const [comments, setComments] = useState<CommentProps[]>(allComments || []);
 
   async function handleComment(e: FormEvent) {
     e.preventDefault();
@@ -27,7 +45,7 @@ export default function Task({ item }: TaskProps) {
     if (!session?.user?.email || !session?.user?.name) return;
 
     try {
-      const docRef = await addDoc(collection(db, "coments"), {
+      const docRef = await addDoc(collection(db, "comments"), {
         comment: input,
         created: new Date(),
         user: session?.user?.email,
@@ -73,6 +91,22 @@ export default function Task({ item }: TaskProps) {
           </button>
         </form>
       </section>
+
+      <section className="w-full flex flex-col">
+        <h2 className="text-2xl font-bold pt-5 pb-4">Todos os comentários</h2>
+        {comments.length === 0 && (
+          <span>Nenhum comentário foi encontrado...</span>
+        )}
+
+        {comments.map((item) => (
+          <article
+            key={item.id}
+            className="mb-5 flex flex-col text-start border rounded border-slate-300 p-2"
+          >
+            <p>{item.comment}</p>
+          </article>
+        ))}
+      </section>
     </div>
   );
 }
@@ -81,6 +115,20 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const id = params?.id as string;
 
   const docRef = doc(db, "tarefas", id);
+
+  const q = query(collection(db, "comments"), where("taskId", "==", id));
+  const snapshotComments = await getDocs(q);
+
+  let allComments: CommentProps[] = [];
+  snapshotComments.forEach((doc) => {
+    allComments.push({
+      id: doc.id,
+      comment: doc.data().comment,
+      user: doc.data().user,
+      name: doc.data().name,
+      taskId: doc.data().taskId,
+    });
+  });
 
   const snapshot = await getDoc(docRef);
 
@@ -111,11 +159,11 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     user: snapshot.data()?.user,
     taskId: id,
   };
-  console.log(task);
 
   return {
     props: {
       item: task,
+      allComments: allComments,
     },
   };
 };
