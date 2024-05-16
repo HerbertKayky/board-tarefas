@@ -13,6 +13,7 @@ import { GetServerSideProps } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { ChangeEvent, FormEvent, useState } from "react";
+import { FaTrash } from "react-icons/fa";
 
 interface TaskProps {
   item: {
@@ -52,6 +53,15 @@ export default function Task({ item, allComments }: TaskProps) {
         name: session?.user.name,
         taskId: item?.taskId,
       });
+      const data = {
+        id: docRef.id,
+        comment: input,
+        user: session?.user?.email,
+        name: session?.user?.name,
+        taskId: item?.taskId,
+      };
+      setComments((oldItems) => [...oldItems, data ]);
+
       setInput("");
     } catch (err) {
       console.log(err);
@@ -101,9 +111,19 @@ export default function Task({ item, allComments }: TaskProps) {
         {comments.map((item) => (
           <article
             key={item.id}
-            className="mb-5 flex flex-col text-start border rounded border-slate-300 p-2"
+            className="mb-5 flex flex-col text-start border rounded border-slate-300 p-3"
           >
-            <p>{item.comment}</p>
+            <div className="flex items-center">
+              <label className="bg-gray-300 rounded ml-1 px-1 text-sm">
+                {item.name}
+              </label>
+              {item.user === session?.user?.email && (
+                <button className="pr-5 mx-2">
+                  <FaTrash size={18} color="#ea3140" />
+                </button>
+              )}
+            </div>
+            <p className="ml-1">{item.comment}</p>
           </article>
         ))}
       </section>
