@@ -1,11 +1,21 @@
 import Image from "next/image";
 import heroImg from "../../public/assets/hero.png";
 import Head from "next/head";
+import { GetStaticProps } from "next";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/services/firebaseConnection";
 
-export default function Home() {
+interface HomeProps {
+  posts: number;
+  comments: number;
+}
+
+export default function Home({ posts, comments }: HomeProps) {
   return (
     <>
-    <Head><title>Tarefas+</title></Head>
+      <Head>
+        <title>Tarefas+</title>
+      </Head>
       <div className="flex flex-col justify-center bg-slate-950 w-full h-[calc(100vh-64px)] items-center">
         <main>
           <div className="flex flex-col items-center justify-center">
@@ -22,10 +32,10 @@ export default function Home() {
 
           <div className="flex flex-col gap-2 sm:flex-row justify-around ">
             <section className="flex justify-center items-center bg-white py-3 px-10 rounded-lg font-bold hover:scale-105 transition-all cursor-pointer">
-              <span>+12 Posts</span>
+              <span>+{posts} Posts</span>
             </section>
             <section className="flex justify-center items-center bg-white py-3 px-10 rounded-lg font-bold hover:scale-105 transition-all cursor-pointer">
-              <span>+90 Comentários</span>
+              <span>+{comments} Comentários</span>
             </section>
           </div>
         </main>
@@ -33,3 +43,20 @@ export default function Home() {
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps = async () => {
+  const commentRef = collection(db, "comments");
+  const postRef = collection(db, "tarefas");
+
+  const postSnapshot = await getDocs(postRef);
+
+  const commentSnapshot = await getDocs(commentRef);
+
+  return {
+    props: {
+      posts: postSnapshot.size || 0,
+      comments: commentSnapshot.size || 0,
+    },
+    revalidate: 120,
+  };
+};
