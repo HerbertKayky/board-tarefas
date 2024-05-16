@@ -1,8 +1,10 @@
 import Textarea from "@/components/textarea";
 import { db } from "@/services/firebaseConnection";
-import { doc, getDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc } from "firebase/firestore";
 import { GetServerSideProps } from "next";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
+import { ChangeEvent, FormEvent, useState } from "react";
 
 interface TaskProps {
   item: {
@@ -15,6 +17,29 @@ interface TaskProps {
 }
 
 export default function Task({ item }: TaskProps) {
+  const { data: session } = useSession();
+  const [input, setInput] = useState("");
+
+  async function handleComment(e: FormEvent) {
+    e.preventDefault();
+    if (input === "") return;
+
+    if (!session?.user?.email || !session?.user?.name) return;
+
+    try {
+      const docRef = await addDoc(collection(db, "coments"), {
+        comment: input,
+        created: new Date(),
+        user: session?.user?.email,
+        name: session?.user.name,
+        taskId: item?.taskId,
+      });
+      setInput("");
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   return (
     <div className="w-full max-w-5xl flex flex-col justify-center items-center mt-10 mr-auto ml-auto px-5">
       <Head>
@@ -23,7 +48,7 @@ export default function Task({ item }: TaskProps) {
 
       <main className="w-full">
         <h1 className="text-2xl font-bold mb-4">Tarefa</h1>
-        <article className="flex items-center justify-center border border-slate-300 leading-9 p-3 rounded">
+        <article className="flex items-center justify-center border border-slate-300 leading-8 p-3 rounded">
           <p className="whitespace-pre-wrap w-full">{item.tarefa}</p>
         </article>
       </main>
@@ -31,9 +56,19 @@ export default function Task({ item }: TaskProps) {
       <section className="my-4 w-full max-w-5xl">
         <h2 className="font-bold my-4 text-2xl">Deixar comentário</h2>
 
-        <form onSubmit={() => {}}>
-          <Textarea placeholder="Digite seu comentário..." />
-          <button className="w-full bg-blue-600 p-2 rounded text-white text-xl mt-3">
+        <form onSubmit={handleComment}>
+          <Textarea
+            required
+            value={input}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+              setInput(e.target.value)
+            }
+            placeholder="Digite seu comentário..."
+          />
+          <button
+            disabled={!session?.user}
+            className="disabled:bg-blue-300 w-full bg-blue-600 p-2 rounded text-white text-xl mt-3"
+          >
             Enviar Comentário
           </button>
         </form>

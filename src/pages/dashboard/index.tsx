@@ -143,7 +143,7 @@ export default function Dashboard({ user }: DashboardProps) {
           {tasks.map((item) => (
             <article
               key={item.id}
-              className="mb-5 leading-7 flex flex-col text-start border rounded border-slate-300 p-3"
+              className="mb-5 flex flex-col text-start border rounded border-slate-300 p-3"
             >
               {item.public && (
                 <div className="flex items-center mb-2">
