@@ -15,6 +15,7 @@ import { getSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { FaTrash } from "react-icons/fa";
 import { FiShare2 } from "react-icons/fi";
 
@@ -67,6 +68,12 @@ export default function Dashboard({ user }: DashboardProps) {
   }
 
   async function handleRegisterTask(e: FormEvent) {
+    toast.success("Tarefa registrada", {
+      style: {
+        background: "#333",
+        color: "#fff",
+      },
+    });
     e.preventDefault();
     if (input === "") return;
 
@@ -85,12 +92,24 @@ export default function Dashboard({ user }: DashboardProps) {
   }
 
   async function handleShare(id: string) {
+    toast.success("Link copiado", {
+      style: {
+        background: "#333",
+        color: "#fff",
+      },
+    });
     await navigator.clipboard.writeText(
       `${process.env.NEXT_PUBLIC_URL}/task/${id}`
     );
   }
 
   async function handleDeleteTask(id: string) {
+    toast.success("Tarefa deletada", {
+      style: {
+        background: "#333",
+        color: "#fff",
+      },
+    });
     const docRef = doc(db, "tarefas", id);
     await deleteDoc(docRef);
   }

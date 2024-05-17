@@ -14,6 +14,7 @@ import { GetServerSideProps } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { ChangeEvent, FormEvent, useState } from "react";
+import toast from "react-hot-toast";
 import { FaTrash } from "react-icons/fa";
 
 interface TaskProps {
@@ -41,6 +42,12 @@ export default function Task({ item, allComments }: TaskProps) {
   const [comments, setComments] = useState<CommentProps[]>(allComments || []);
 
   async function handleComment(e: FormEvent) {
+    toast.success("Comentário efetuado", {
+      style: {
+        background: "#333",
+        color: "#fff",
+      },
+    });
     e.preventDefault();
     if (input === "") return;
 
@@ -71,6 +78,12 @@ export default function Task({ item, allComments }: TaskProps) {
 
   async function handleDeleteComment(id: string) {
     try {
+      toast.success("Comentário excluído", {
+        style: {
+          background: "#333",
+          color: "#fff",
+        },
+      });
       const docRef = doc(db, "comments", id);
       await deleteDoc(docRef);
 
